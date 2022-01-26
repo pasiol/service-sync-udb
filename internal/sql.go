@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb"
 	mssqlutils "github.com/pasiol/go-mssql-utils"
-	"github.com/pasiol/pq"
+	pq "github.com/pasiol/gopq"
 
 	"github.com/pasiol/service-sync-udb/configs"
 )
@@ -18,6 +18,10 @@ var (
 )
 
 func SyncIds() {
+	var (
+		succeed = 0
+		failed  = 0
+	)
 	table := configs.SQLTable
 	debug, debugExists := os.LookupEnv("APP_DEBUG")
 	if debugExists {
@@ -35,34 +39,44 @@ func SyncIds() {
 		log.Fatalf("sql connection error: %s", err)
 	}
 	for _, s := range studenstWithoutPersonalId {
-		personalId, personalEmail, studentId := lookupPrimus(s.Id)
-		if len(personalId) > 0 {
-			tsql := configs.GetUpdateStatementSQL(s.Id, personalId, personalEmail, studentId)
-			_, err := sqlDb.QueryContext(ctx, tsql)
-			if err != nil {
-				log.Printf("updating personal id of student %d failed: %s", s.Id, err)
-			} else {
-				log.Printf("updating personal id of student %d succeed", s.Id)
-			}
+		personalId, personalEmail, studentId, err := lookupPrimus(s.Id)
+		if err != nil {
+			log.Printf("getting student %s primus data failed: %s", studentId, err)
+			failed = failed + 1
 		} else {
-			log.Printf("student %d has no personal id", s.Id)
+			if len(personalId) > 0 {
+				tsql := configs.GetUpdateStatementSQL(s.Id, personalId, personalEmail, studentId)
+				_, err := sqlDb.QueryContext(ctx, tsql)
+				if err != nil {
+					log.Printf("updating personal id of student %d failed: %s", s.Id, err)
+					failed = failed + 1
+				} else {
+					log.Printf("updating personal id of student %d succeed", s.Id)
+					succeed = succeed + 1
+				}
+			} else {
+				log.Printf("student %d has no personal id", s.Id)
+			}
 		}
 	}
 }
 
-func lookupPrimus(id int64) (string, string, string) {
+func lookupPrimus(id int64) (string, string, string, error) {
 	pq.Debug = true
 
 	query := configs.StudentQuery(id)
-	output := pq.ExecuteAndRead(query, 30)
+	output, err := pq.ExecuteAndRead(query, 30)
+	if err != nil {
+		return "", "", "", err
+	}
 	rows := strings.Split(output, "\n")
 	if len(rows) == 2 {
 		updatedData := strings.Split(rows[0], ";")
 		if len(updatedData) == 4 {
-			return updatedData[1], updatedData[2], updatedData[3]
+			return updatedData[1], updatedData[2], updatedData[3], nil
 		}
 	}
-	return "", "", ""
+	return "", "", "", nil
 }
 
 func getStudentsWithoutIds(t string) []Student {
