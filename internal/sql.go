@@ -30,7 +30,8 @@ func SyncIds() {
 		}
 	}
 	studenstWithoutPersonalId := getStudentsWithoutIds(table)
-	log.Printf("founded %d students without personal ids", len(studenstWithoutPersonalId))
+	total := len(studenstWithoutPersonalId)
+	log.Printf("founded %d students without personal ids", total)
 	sqlDb := mssqlutils.ConnectOrDie(configs.SQLServer, configs.SQLPort, configs.SQLUser, configs.SQLPassword, configs.SQLDb, true, true)
 	defer sqlDb.Close()
 	ctx := context.Background()
@@ -59,6 +60,7 @@ func SyncIds() {
 			}
 		}
 	}
+	log.Printf("sync ended total count: %d, succeed count: %d, failed count: %d", total, succeed, failed)
 }
 
 func lookupPrimus(id int64) (string, string, string, error) {
