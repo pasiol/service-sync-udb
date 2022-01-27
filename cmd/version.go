@@ -15,6 +15,6 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number of service-sync-udb",
 	Long:  `Print the version number of service-sync-udb`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("service-sync-udb v0.01")
+		fmt.Println("service-sync-udb v0.1.0")
 	},
 }
