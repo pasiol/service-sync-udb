@@ -11,8 +11,13 @@ func init() {
 
 var personalIdsCmd = &cobra.Command{
 	Use:   "personal-ids",
-	Short: "",
-	Long:  ``,
+	Short: "Syncing missing personal ids to SQL database.",
+	Long: `Syncing missing personal ids to SQL database.
+	Retrieves updated information from Primus.
+	Updates to SQL-database personal id	and 
+	student id-fields, using primus id as foreign key.
+	
+	syncudb personal-ids`,
 	Run: func(cmd *cobra.Command, args []string) {
 		internal.SyncIds()
 	},

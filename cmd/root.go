@@ -8,10 +8,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "wilma-users",
-	Short: "wilma-user is command line tool manage Wilma accounts",
-	Long: `wilma-user is command line tool manage Wilma accounts.
-               Syncing personal ids from Primus to user database`,
+	Use:   "syncudb",
+	Short: "syncudb is command line tool for syncing user database",
+	Long:  `syncudb is command line tool for syncing user database`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Do Stuff Here
 	},
