@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"log"
-	"os"
 	"strings"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -22,14 +21,8 @@ func SyncIds() {
 		succeed = 0
 		failed  = 0
 	)
-	table := configs.SQLTable
-	debug, debugExists := os.LookupEnv("APP_DEBUG")
-	if debugExists {
-		if debug == "true" {
-			table = configs.SQLDebugTable
-		}
-	}
-	studenstWithoutPersonalId := getStudentsWithoutIds(table)
+
+	studenstWithoutPersonalId := getStudentsWithoutIds()
 	total := len(studenstWithoutPersonalId)
 	log.Printf("founded %d students without personal ids", total)
 	sqlDb := mssqlutils.ConnectOrDie(configs.SQLServer, configs.SQLPort, configs.SQLUser, configs.SQLPassword, configs.SQLDb, true, true)
@@ -39,6 +32,7 @@ func SyncIds() {
 	if err != nil {
 		log.Fatalf("sql connection error: %s", err)
 	}
+	_ = pq.UpdatePQ(configs.GetPrimusConfig().PrimusHost, configs.GetPrimusConfig().PrimusPort)
 	for _, s := range studenstWithoutPersonalId {
 		personalId, personalEmail, studentId, err := lookupPrimus(s.Id)
 		if err != nil {
@@ -64,7 +58,6 @@ func SyncIds() {
 }
 
 func lookupPrimus(id int64) (string, string, string, error) {
-	pq.Debug = true
 
 	query := configs.StudentQuery(id)
 	output, err := pq.ExecuteAndRead(query, 30)
@@ -81,7 +74,7 @@ func lookupPrimus(id int64) (string, string, string, error) {
 	return "", "", "", nil
 }
 
-func getStudentsWithoutIds(t string) []Student {
+func getStudentsWithoutIds() []Student {
 	var students = []Student{}
 	sqlDb := mssqlutils.ConnectOrDie(configs.SQLServer, configs.SQLPort, configs.SQLUser, configs.SQLPassword, configs.SQLDb, true, true)
 	defer sqlDb.Close()
@@ -90,7 +83,7 @@ func getStudentsWithoutIds(t string) []Student {
 	if err != nil {
 		log.Fatalf("sql connection error: %s", err)
 	}
-	tsql := configs.StudentsWithoutIdsSQL
+	tsql := configs.GetStudentsWithoutIdsSQL()
 	rows, err := sqlDb.QueryContext(ctx, tsql)
 	if err != nil {
 		if debug {
