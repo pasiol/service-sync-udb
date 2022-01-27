@@ -17,4 +17,4 @@ build:
 compile:
 	echo "Compiling for every OS and Platform"
 	GOOS=linux GOARCH=amd64 go build ${LDFLAGS_app} -o bin/${BINARY} main.go
-	GOOS=windows GOARCH=amd64 go build ${LDFLAGS_app} -o bin/${BINARY}.exe main.go
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X 'main.Version=${VERSION}' -X main.Build=${BUILD}" -o bin/${BINARY}.exe main.go
