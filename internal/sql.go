@@ -17,6 +17,7 @@ var (
 )
 
 func SyncIds() {
+
 	var (
 		succeed = 0
 		failed  = 0
@@ -32,7 +33,10 @@ func SyncIds() {
 	if err != nil {
 		log.Fatalf("sql connection error: %s", err)
 	}
-	_ = pq.UpdatePQ(configs.GetPrimusConfig().PrimusHost, configs.GetPrimusConfig().PrimusPort)
+	err = pq.UpdatePQ(configs.GetPrimusConfig().PrimusHost, configs.GetPrimusConfig().PrimusPort)
+	if err != nil {
+		log.Printf("PQ update failed: %s", err)
+	}
 	for _, s := range studenstWithoutPersonalId {
 		personalId, personalEmail, studentId, err := lookupPrimus(s.Id)
 		if err != nil {
